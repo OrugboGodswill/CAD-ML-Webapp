@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feature Importance - CADPredict</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Added same styling and animations as homepage -->
+  <style>
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+      50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes medical-cross {
+      0% { opacity: 0.1; transform: rotate(0deg); }
+      50% { opacity: 0.3; transform: rotate(180deg); }
+      100% { opacity: 0.1; transform: rotate(360deg); }
+    }
+    
+    .heartbeat { animation: heartbeat 2s ease-in-out infinite; }
+    .pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+    .float { animation: float 3s ease-in-out infinite; }
+    .medical-cross { animation: medical-cross 20s linear infinite; }
+    
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+       /* Added mobile menu slide-down animation styles */
+    .mobile-menu {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+      opacity: 0;
+    }
+    
+    .mobile-menu.show {
+      max-height: 300px;
+      opacity: 1;
+    }
+    
+    .mobile-menu-backdrop {
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+
+    /* Medical background pattern */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(239, 68, 68, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50 medical-bg relative overflow-x-hidden">
+  <!-- Same header structure as homepage -->
+  <header class="bg-white border-b border-white-1 sticky top-0 bg-transparent z-50">
+    <div class="max-w-4xl mx-auto px-4 pb-5 pt-5 sm:px-6 lg:px-0">
+      <div class="flex justify-between items-center h-16">
+        <!-- Logo -->
+        <div class="flex items-center space-x-2">
+          <div>
+            <!-- Heart Icon -->
+                    <div class="bg-gradient-to-r from-blue-600 to-red-500 p-2 rounded-xl shadow-lg transform hover:scale-110 transition-transform duration-200">
+                    <a href="{{ url_for('index') }}"><i data-lucide="heart" class="h-5 w-5 sm:h-6 sm:w-6 text-white animate-pulse"  ></i></a>
+                    </div>
+          </div>
+          <span class="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-900 to-red-600 bg-clip-text text-transparent">CADPredict</span>
+        </div>
+
+
+        <!-- Nav links -->
+        <nav class="hidden md:flex items-center space-x-6 lg:space-x-8">
+        <a href="{{ url_for('index') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Home</a>
+          <a href="{{ url_for('test_form') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Test</a>
+          <a href="{{ url_for('about_page') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
+          <a href="{{ url_for('Doc_page') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Doc</a>
+          <a href="{{ url_for('statchart') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Stat Chart</a>
+        </nav>
+
+
+        <!-- Mobile Menu Button -->
+        <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-110">
+          <svg class="h-5 w-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
+<!-- Mobile Menu (with animation) -->
+    <div id="mobileMenu" class="mobile-menu md:hidden absolute top-full left-0 w-full mobile-menu-backdrop shadow-2xl z-40 border-t border-white/20">
+    <div class="max-w-4xl mx-auto px-6 py-8">
+      <nav class="flex flex-col space-y-6">
+        <a href="/" class="text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105 hover:translate-x-2 flex items-center space-x-3 p-3 rounded-xl hover:bg-blue-50/50">
+          <i data-lucide="Home" class="w-5 h-5"></i>
+          <span>Home</span>
+        </a>
+        <a href="/test" class="text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105 hover:translate-x-2 flex items-center space-x-3 p-3 rounded-xl hover:bg-blue-50/50">
+          <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+          <span>Test</span>
+        </a>
+        <a href="/about" class="text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105 hover:translate-x-2 flex items-center space-x-3 p-3 rounded-xl hover:bg-blue-50/50">
+          <i data-lucide="info" class="w-5 h-5"></i>
+          <span>about</span>
+        </a>
+        <a href="/Doc" class="text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105 hover:translate-x-2 flex items-center space-x-3 p-3 rounded-xl hover:bg-blue-50/50">
+          <i data-lucide="file-text" class="w-5 h-5"></i>
+          <span>Doc</span>
+        </a>
+      </nav>
+    </div>
+  </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Feature Importance Content Section -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="flex flex-col items-center space-y-12">
+      
+      <!-- Feature Importance Header Card -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 text-center card-hover relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-red-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <div class="absolute top-4 right-4 text-blue-200/20 text-4xl medical-cross">⚕</div>
+          <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-900 via-purple-700 to-red-600 bg-clip-text text-transparent mb-6">
+            SVM Model Feature Importance
+          </h1>
+          <p class="text-lg text-gray-700 mb-8 leading-relaxed">
+            Understanding which health factors have the most significant impact on coronary artery disease prediction. 
+            Our Support Vector Machine model analyzes these key biomarkers to provide accurate risk assessments.
+          </p>
+        </div>
+      </div>
+
+      <!-- Feature Importance Chart -->
+      <div class="w-full max-w-6xl glass-effect shadow-2xl rounded-3xl overflow-hidden card-hover relative">
+        <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5"></div>
+        <div class="relative z-10 p-8">
+          <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-900 to-purple-700 bg-clip-text text-transparent mb-4">
+              Model Coefficients Analysis
+            </h2>
+            <p class="text-gray-700">Positive values increase CAD risk, negative values decrease risk</p>
+          </div>
+          
+          <div class="h-[500px] w-full">
+            <canvas id="featureChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Insights Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
+        <!-- Highest Risk Factor -->
+        <div class="glass-effect border border-red-200/50 p-6 rounded-2xl shadow-lg hover:shadow-2xl card-hover group relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="relative z-10">
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="trending-up" class="w-6 h-6 text-red-600"></i>
+              </div>
+              <h3 class="font-semibold text-red-900">Highest Risk Factor</h3>
+            </div>
+            <div class="text-2xl font-bold text-red-600 mb-2">Age (0.60)</div>
+            <p class="text-gray-600 text-sm">Age is the strongest predictor of CAD risk in our model</p>
+          </div>
+        </div>
+
+        <!-- Protective Factor -->
+        <div class="glass-effect border border-green-200/50 p-6 rounded-2xl shadow-lg hover:shadow-2xl card-hover group relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="relative z-10">
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
+                <i data-lucide="shield-check" class="w-6 h-6 text-green-600"></i>
+              </div>
+              <h3 class="font-semibold text-green-900">Protective Factor</h3>
+            </div>
+            <div class="text-2xl font-bold text-green-600 mb-2">BMI (-0.44)</div>
+            <p class="text-gray-600 text-sm">Lower BMI values are associated with reduced CAD risk</p>
+          </div>
+        </div>
+
+        <!-- Model Accuracy -->
+        <div class="glass-effect border border-blue-200/50 p-6 rounded-2xl shadow-lg hover:shadow-2xl card-hover group relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="relative z-10">
+            <div class="flex items-center mb-4">
+              <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300 heartbeat">
+                <i data-lucide="brain" class="w-6 h-6 text-blue-600"></i>
+              </div>
+              <h3 class="font-semibold text-blue-900">Model Performance</h3>
+            </div>
+            <div class="text-2xl font-bold text-blue-600 mb-2">92.5%</div>
+            <p class="text-gray-600 text-sm">SVM model accuracy on validation dataset</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Explanation -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 card-hover relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <h3 class="text-2xl font-bold bg-gradient-to-r from-blue-900 to-purple-700 bg-clip-text text-transparent mb-6 text-center">
+            Understanding the Features
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div class="flex items-center p-3 bg-white/50 rounded-lg">
+                <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                <span class="font-medium text-gray-800">Age:</span>
+                <span class="ml-2 text-gray-600">Primary risk factor</span>
+              </div>
+              <div class="flex items-center p-3 bg-white/50 rounded-lg">
+                <div class="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
+                <span class="font-medium text-gray-800">Cholesterol:</span>
+                <span class="ml-2 text-gray-600">Blood lipid levels</span>
+              </div>
+              <div class="flex items-center p-3 bg-white/50 rounded-lg">
+                <div class="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                <span class="font-medium text-gray-800">Family History:</span>
+                <span class="ml-2 text-gray-600">Genetic predisposition</span>
+              </div>
+              <div class="flex items-center p-3 bg-white/50 rounded-lg">
+                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                <span class="font-medium text-gray-800">Adiposity:</span>
+                <span class="ml-2 text-gray-600">Body fat percentage</span>
+              </div>
+              <div class="flex items-center p-3 bg-white/50 rounded-lg">
+                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                <span class="font-medium text-gray-800">Stress Prone:</span>
+                <span class="ml-2 text-gray-600">Psychological factor</span>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="flex items-center p-3 bg-white/50 rounded-lg">
+                <div class="w-3 h-3 bg-indigo-500 rounded-full mr-3"></div>
+                <span class="font-medium text-gray-800">Tobacco:</span>
+                <span class="ml-2 text-gray-600">Smoking history</span>
+              </div>
+              <div class="flex items-center p-3 bg-white/50 rounded-lg">
+                <div class="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                <span class="font-medium text-gray-800">Systolic BP:</span>
+                <span class="ml-2 text-gray-600">Blood pressure</span>
+              </div>
+              <div class="flex items-center p-3 bg-white/50 rounded-lg">
+                <div class="w-3 h-3 bg-pink-500 rounded-full mr-3"></div>
+                <span class="font-medium text-gray-800">Alcohol:</span>
+                <span class="ml-2 text-gray-600">Consumption levels</span>
+              </div>
+              <div class="flex items-center p-3 bg-white/50 rounded-lg">
+                <div class="w-3 h-3 bg-gray-500 rounded-full mr-3"></div>
+                <span class="font-medium text-gray-800">Sex:</span>
+                <span class="ml-2 text-gray-600">Gender factor</span>
+              </div>
+              <div class="flex items-center p-3 bg-white/50 rounded-lg">
+                <div class="w-3 h-3 bg-teal-500 rounded-full mr-3"></div>
+                <span class="font-medium text-gray-800">BMI:</span>
+                <span class="ml-2 text-gray-600">Body mass index</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="glass-effect border-t border-white/20 w-full">
+        <div class="max-w-7xl px-4 sm:px-6 lg:px-8 py-6 text-center">
+          <p class="text-sm text-gray-700 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-300/50 rounded-xl p-4 inline-block shadow-lg backdrop-blur-sm">
+            <strong class="text-yellow-800">Educational prototype — not a medical device.</strong> 
+            <span class="text-gray-600">For emergencies, seek urgent care.</span>
+          </p>
+        </div>
+      </footer>
+    </div>
+  </main>
+
+  <!-- Chart.js setup for feature importance visualization -->
+  <script>
+    const featureData = {
+      age: 0.600282,
+      chol: 0.299219,
+      famhist: 0.290608,
+      adiposity: 0.284265,
+      stress_prone: 0.270357,
+      tobacco_per_yer: 0.268730,
+      systolic_bp: 0.115410,
+      alco_per_year: 0.028233,
+      sex: -0.228672,
+      Bmi: -0.440071
+    };
+
+    const ctx = document.getElementById('featureChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Age', 'Cholesterol', 'Family History', 'Adiposity', 'Stress Prone', 'Tobacco', 'Systolic BP', 'Alcohol', 'Sex', 'BMI'],
+        datasets: [{
+          label: 'Feature Importance',
+          data: Object.values(featureData),
+          backgroundColor: [
+            'rgba(239, 68, 68, 0.8)',   // Age - red (highest positive)
+            'rgba(245, 158, 11, 0.8)',  // Cholesterol - orange
+            'rgba(234, 179, 8, 0.8)',   // Family History - yellow
+            'rgba(34, 197, 94, 0.8)',   // Adiposity - green
+            'rgba(59, 130, 246, 0.8)',  // Stress Prone - blue
+            'rgba(99, 102, 241, 0.8)',  // Tobacco - indigo
+            'rgba(168, 85, 247, 0.8)',  // Systolic BP - purple
+            'rgba(236, 72, 153, 0.8)',  // Alcohol - pink
+            'rgba(107, 114, 128, 0.8)', // Sex - gray
+            'rgba(20, 184, 166, 0.8)'   // BMI - teal (most negative)
+          ],
+          borderColor: [
+            'rgba(239, 68, 68, 1)',
+            'rgba(245, 158, 11, 1)',
+            'rgba(234, 179, 8, 1)',
+            'rgba(34, 197, 94, 1)',
+            'rgba(59, 130, 246, 1)',
+            'rgba(99, 102, 241, 1)',
+            'rgba(168, 85, 247, 1)',
+            'rgba(236, 72, 153, 1)',
+            'rgba(107, 114, 128, 1)',
+            'rgba(20, 184, 166, 1)'
+          ],
+          borderWidth: 2,
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            titleColor: '#1f2937',
+            bodyColor: '#1f2937',
+            borderColor: 'rgba(59, 130, 246, 0.2)',
+            borderWidth: 1,
+            callbacks: {
+              label: function(context) {
+                const value = context.parsed.y;
+                const impact = value > 0 ? 'Increases CAD Risk' : 'Decreases CAD Risk';
+                return `${context.label}: ${value.toFixed(3)} (${impact})`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { 
+              color: '#64748b', 
+              font: { weight: '500' },
+              maxRotation: 45
+            },
+            grid: { display: false }
+          },
+          y: {
+            ticks: { 
+              color: '#64748b', 
+              font: { weight: '500' },
+              callback: function(value) {
+                return value.toFixed(2);
+              }
+            },
+            grid: { color: 'rgba(148, 163, 184, 0.1)' },
+            title: {
+              display: true,
+              text: 'Coefficient Value',
+              color: '#374151',
+              font: { weight: 'bold', size: 14 }
+            }
+          }
+        }
+      }
+    });
+  </script>
+
+  <script>
+    lucide.createIcons();
+
+          document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+      const mobileMenu = document.getElementById('mobileMenu');
+      mobileMenu.classList.toggle('show');
+    });
+
+    document.addEventListener('click', function(event) {
+      const mobileMenu = document.getElementById('mobileMenu');
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      
+      if (!mobileMenu.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
+        mobileMenu.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>

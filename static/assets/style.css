@@ -1,0 +1,58 @@
+/* ==============================
+   Global Styles for Tailwind CDN
+   ============================== */
+
+/* Basic reset for body */
+body {
+  background-color: #ffffff; /* white */
+  color: #111827; /* Tailwind gray-900 */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/* ==============================
+   Custom Animations
+   ============================== */
+
+/* Float up & down animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Fade-in animation */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fade-in 1s ease-out;
+}
+
+/* ==============================
+   Custom Utilities
+   ============================== */
+
+/* Extra big shadow */
+.shadow-3xl {
+  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Example for smooth hover transition (optional) */
+.transition-base {
+  transition: all 0.3s ease-in-out;
+}

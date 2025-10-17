@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CADPredict</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+      50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
+    }
+      /* Added mobile menu slide-down animation styles */
+    .mobile-menu {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+      opacity: 0;
+    }
+    
+    .mobile-menu.show {
+      max-height: 300px;
+      opacity: 1;
+    }
+    
+    .mobile-menu-backdrop {
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .heartbeat { animation: heartbeat 2s ease-in-out infinite; }
+    .pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+    .float { animation: float 3s ease-in-out infinite; }
+
+    
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    
+    .medical-gradient {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+      body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(239, 68, 68, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    /* Added mobile menu slide-down animation styles */
+    .mobile-menu {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+      opacity: 0;
+    }
+    
+    .mobile-menu.show {
+      max-height: 300px;
+      opacity: 1;
+    }
+    
+    .mobile-menu-backdrop {
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+    }
+  </style>
+
+</head>
+<body class="min-h-screen bg-gradient-to-br from-white-50 to-white">
+  <!-- Header -->
+  <header class="bg-white border-b border-white-1 sticky top-0 bg-transparent z-50">
+    <div class="max-w-4xl mx-auto px-4 pb-5 pt-5 sm:px-6 lg:px-0">
+      <div class="flex justify-between items-center h-16">
+        <!-- Logo -->
+        <div class="flex items-center space-x-2">
+          <div>
+            <!-- Heart Icon -->
+                    <div class="bg-gradient-to-r from-blue-600 to-red-500 p-2 rounded-xl shadow-lg transform hover:scale-110 transition-transform duration-200">
+                    <a href="{{ url_for('index') }}"><i data-lucide="heart" class="h-5 w-5 sm:h-6 sm:w-6 text-white animate-pulse"  ></i></a>
+                    </div>
+          </div>
+          <span class="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-900 to-red-600 bg-clip-text text-transparent">CADPredict</span>
+        </div>
+
+        <!-- Nav links -->
+        <nav class="hidden md:flex items-center space-x-6 lg:space-x-8">
+          <a href="{{ url_for('test_form') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Test</a>
+          <a href="{{ url_for('about_page') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">About</a>
+          <a href="{{ url_for('Doc_page') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Doc</a>
+          <a href="{{ url_for('statchart') }}" class="text-gray-700 hover:text-blue-600 font-medium transition-colors">Stat Chart</a>
+        </nav>
+
+        <!-- Mobile Menu -->
+        <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-110">
+          <svg class="h-5 w-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
+<!-- Mobile Menu (with animation) -->
+    <div id="mobileMenu" class="mobile-menu md:hidden absolute top-full left-0 w-full mobile-menu-backdrop shadow-2xl z-40 border-t border-white/20">
+    <div class="max-w-4xl mx-auto px-6 py-8">
+      <nav class="flex flex-col space-y-6">
+        <a href="/" class="text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105 hover:translate-x-2 flex items-center space-x-3 p-3 rounded-xl hover:bg-blue-50/50">
+          <i data-lucide="Home" class="w-5 h-5"></i>
+          <span>Home</span>
+        </a>
+        <a href="/test" class="text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105 hover:translate-x-2 flex items-center space-x-3 p-3 rounded-xl hover:bg-blue-50/50">
+          <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+          <span>Test</span>
+        </a>
+        <a href="/about" class="text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105 hover:translate-x-2 flex items-center space-x-3 p-3 rounded-xl hover:bg-blue-50/50">
+          <i data-lucide="info" class="w-5 h-5"></i>
+          <span>about</span>
+        </a>
+        <a href="/statchart" class="text-gray-700 hover:text-blue-600 font-medium transition-all duration-300 hover:scale-105 hover:translate-x-2 flex items-center space-x-3 p-3 rounded-xl hover:bg-blue-50/50">
+          <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+          <span>statchart</span>
+        </a>
+      </nav>
+    </div>
+  </div>
+      </div>
+    </div>
+  </header>
+
+
+
+
+    <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="flex flex-col items-center space-y-12">
+      
+      <!-- Documentation header section -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 text-center card-hover relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-red-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <div class="absolute top-4 right-4 text-blue-200/20 text-4xl medical-cross">📚</div>
+          <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-900 via-blue-700 to-red-600 bg-clip-text text-transparent mb-6">CADPredict Documentation</h1>
+          <p class="text-lg text-gray-700 mb-8 leading-relaxed">
+            Comprehensive guide to understanding and using our AI-powered coronary artery disease prediction system.
+          </p>
+        </div>
+      </div>
+
+      <!-- Disclaimer section -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 card-hover relative overflow-hidden border-l-4 border-red-500">
+        <div class="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-orange-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <div class="flex items-center mb-4">
+            <div class="bg-red-100 p-3 rounded-full mr-4">
+              <i data-lucide="alert-triangle" class="w-6 h-6 text-red-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-red-800">Important Disclaimer</h2>
+          </div>
+          <p class="text-gray-700 leading-relaxed">
+            CADPredict is an educational tool, not a medical device. It does not provide medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider for any concerns about coronary artery disease or related issues.
+          </p>
+        </div>
+      </div>
+
+      <!-- Overview section -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 card-hover relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <div class="flex items-center mb-6">
+            <div class="bg-blue-100 p-3 rounded-full mr-4 heartbeat">
+              <i data-lucide="heart" class="w-6 h-6 text-blue-600"></i>
+            </div>
+            <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-900 to-purple-700 bg-clip-text text-transparent">Overview</h2>
+          </div>
+          <p class="text-gray-700 leading-relaxed mb-4">
+            CADPredict is an AI-powered web application designed to assess the risk of coronary artery disease (CAD) based on user-entered health metrics. Using a trained machine learning model (SVM with linear kernel), the app provides risk predictions and "explainability" via feature coefficients, helping users understand which health factors contribute most to their estimated risk.
+          </p>
+          <p class="text-gray-700 leading-relaxed">
+            The goal is not to replace medical judgment, but to raise awareness, promote preventive behaviors, and enable users to make more informed health decisions.
+          </p>
+        </div>
+      </div>
+
+      <!-- What CADPredict Does section -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 card-hover relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-blue-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <div class="flex items-center mb-6">
+            <div class="bg-green-100 p-3 rounded-full mr-4">
+              <i data-lucide="activity" class="w-6 h-6 text-green-600"></i>
+            </div>
+            <h2 class="text-3xl font-bold bg-gradient-to-r from-green-900 to-blue-700 bg-clip-text text-transparent">What CADPredict Does</h2>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="glass-effect border border-blue-200/50 p-6 rounded-2xl">
+              <h3 class="font-semibold text-blue-900 mb-3 flex items-center">
+                <i data-lucide="clipboard-list" class="w-5 h-5 mr-2"></i>
+                Data Collection
+              </h3>
+              <p class="text-gray-600 text-sm">Accepts input of health factors via a user-friendly form including age, cholesterol, blood pressure, smoking, adiposity, family history, stress behavior, BMI, and alcohol use.</p>
+            </div>
+            <div class="glass-effect border border-purple-200/50 p-6 rounded-2xl">
+              <h3 class="font-semibold text-blue-900 mb-3 flex items-center">
+                <i data-lucide="cpu" class="w-5 h-5 mr-2"></i>
+                Data Processing
+              </h3>
+              <p class="text-gray-600 text-sm">Preprocesses the inputs (scaling, encoding) exactly as used in model training to ensure accurate predictions.</p>
+            </div>
+            <div class="glass-effect border border-red-200/50 p-6 rounded-2xl">
+              <h3 class="font-semibold text-blue-900 mb-3 flex items-center">
+                <i data-lucide="brain" class="w-5 h-5 mr-2"></i>
+                ML Prediction
+              </h3>
+              <p class="text-gray-600 text-sm">Uses a machine learning model (Support Vector Machine) to predict whether a user is at high risk or low risk for CAD.</p>
+            </div>
+            <div class="glass-effect border border-orange-200/50 p-6 rounded-2xl">
+              <h3 class="font-semibold text-blue-900 mb-3 flex items-center">
+                <i data-lucide="bar-chart-3" class="w-5 h-5 mr-2"></i>
+                Feature Analysis
+              </h3>
+              <p class="text-gray-600 text-sm">Highlights which features in the user's input contributed most strongly to the prediction, based on model coefficients.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Features section -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 card-hover relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-pink-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <div class="flex items-center mb-6">
+            <div class="bg-purple-100 p-3 rounded-full mr-4">
+              <i data-lucide="star" class="w-6 h-6 text-purple-600"></i>
+            </div>
+            <h2 class="text-3xl font-bold bg-gradient-to-r from-purple-900 to-pink-700 bg-clip-text text-transparent">Key Features</h2>
+          </div>
+          <div class="space-y-6">
+            <div class="flex items-start space-x-4">
+              <div class="bg-blue-100 p-2 rounded-lg">
+                <i data-lucide="target" class="w-5 h-5 text-blue-600"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-blue-900 mb-2">Risk Prediction</h3>
+                <p class="text-gray-600">Input your health metrics and get a prediction: High Risk or Low Risk.</p>
+              </div>
+            </div>
+            <div class="flex items-start space-x-4">
+              <div class="bg-red-100 p-2 rounded-lg">
+                <i data-lucide="percent" class="w-5 h-5 text-red-600"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-blue-900 mb-2">Probability Score</h3>
+                <p class="text-gray-600">See how likely the model believes CAD is present (a percentage), not just a binary yes/no.</p>
+              </div>
+            </div>
+            <div class="flex items-start space-x-4">
+              <div class="bg-green-100 p-2 rounded-lg">
+                <i data-lucide="trending-up" class="w-5 h-5 text-green-600"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-blue-900 mb-2">Feature Importances</h3>
+                <p class="text-gray-600">The model shows which features (age, cholesterol, etc.) had the highest positive or negative influence on the prediction.</p>
+              </div>
+            </div>
+            <div class="flex items-start space-x-4">
+              <div class="bg-orange-100 p-2 rounded-lg">
+                <i data-lucide="smartphone" class="w-5 h-5 text-orange-600"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-blue-900 mb-2">Responsive UI</h3>
+                <p class="text-gray-600">Designed to work well on desktop & mobile. Clear, intuitive fields; sliders or radio buttons where appropriate.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Technical Details section -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 card-hover relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-cyan-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <div class="flex items-center mb-6">
+            <div class="bg-indigo-100 p-3 rounded-full mr-4">
+              <i data-lucide="settings" class="w-6 h-6 text-indigo-600"></i>
+            </div>
+            <h2 class="text-3xl font-bold bg-gradient-to-r from-indigo-900 to-cyan-700 bg-clip-text text-transparent">How It Works (Technical Details)</h2>
+          </div>
+          <div class="space-y-6">
+            <div class="glass-effect border border-blue-200/50 p-6 rounded-2xl">
+              <h3 class="font-semibold text-blue-900 mb-3 flex items-center">
+                <i data-lucide="database" class="w-5 h-5 mr-2"></i>
+                Data Preparation
+              </h3>
+              <p class="text-gray-600 text-sm">The model was trained on a dataset with features including sex, systolic blood pressure, tobacco usage, cholesterol, adiposity, family history, stress prone behavior, BMI, alcohol consumption per year, age, and a binary target whether CAD is present.</p>
+            </div>
+            <div class="glass-effect border border-green-200/50 p-6 rounded-2xl">
+              <h3 class="font-semibold text-blue-900 mb-3 flex items-center">
+                <i data-lucide="filter" class="w-5 h-5 mr-2"></i>
+                Preprocessing
+              </h3>
+              <p class="text-gray-600 text-sm">Data was scaled (with StandardScaler) so each feature has mean zero and standard deviation one. Categorical data (like family history) was encoded to binary.</p>
+            </div>
+            <div class="glass-effect border border-purple-200/50 p-6 rounded-2xl">
+              <h3 class="font-semibold text-blue-900 mb-3 flex items-center">
+                <i data-lucide="brain" class="w-5 h-5 mr-2"></i>
+                Model Architecture
+              </h3>
+              <p class="text-gray-600 text-sm">A linear Support Vector Machine (SVM) with a linear kernel, possibly balanced class weights to handle any imbalance, trained and validated on hold-out data.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Example Usage section -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 card-hover relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-emerald-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <div class="flex items-center mb-6">
+            <div class="bg-teal-100 p-3 rounded-full mr-4">
+              <i data-lucide="play-circle" class="w-6 h-6 text-teal-600"></i>
+            </div>
+            <h2 class="text-3xl font-bold bg-gradient-to-r from-teal-900 to-emerald-700 bg-clip-text text-transparent">Example Usage</h2>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left p-4 font-semibold text-blue-900">Scenario</th>
+                  <th class="text-left p-4 font-semibold text-blue-900">Sample Input</th>
+                  <th class="text-left p-4 font-semibold text-blue-900">Expected Prediction</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-gray-100">
+                  <td class="p-4">
+                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">Low Risk</span>
+                  </td>
+                  <td class="p-4 text-sm text-gray-600">Female, age 30, no tobacco, normal cholesterol, normal blood pressure, no family history, moderate BMI, low alcohol, low stress</td>
+                  <td class="p-4">
+                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">Low Risk</span>
+                  </td>
+                </tr>
+                <tr class="border-b border-gray-100">
+                  <td class="p-4">
+                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">High Risk</span>
+                  </td>
+                  <td class="p-4 text-sm text-gray-600">Male, age 65, smoker, high cholesterol, high blood pressure, family history of CAD, high stress, moderate obesity, moderate alcohol</td>
+                  <td class="p-4">
+                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">High Risk</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Project Structure section -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 card-hover relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-slate-500/5 via-transparent to-gray-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <div class="flex items-center mb-6">
+            <div class="bg-slate-100 p-3 rounded-full mr-4">
+              <i data-lucide="folder" class="w-6 h-6 text-slate-600"></i>
+            </div>
+            <h2 class="text-3xl font-bold bg-gradient-to-r from-slate-900 to-gray-700 bg-clip-text text-transparent">Project Structure</h2>
+          </div>
+          <div class="bg-gray-900 rounded-2xl p-6 text-green-400 font-mono text-sm overflow-x-auto">
+            <pre>CADPredict/
+├── app.py               # Flask backend app
+├── model.pkl            # Trained SVM model
+├── scaler.pkl           # Data scaler used in preprocessing
+├── templates/
+│   ├── index.html       # Homepage / documentation / landing page
+│   ├── test.html        # Form page for entering inputs
+│   ├── about.html       # About project page
+│   └── docs.html        # This documentation page
+├── static/
+│   ├── assets/...       # CSS, images
+│   └── img/...          # Image files
+└── README.md            # Overall project info</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Limitations section -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 card-hover relative overflow-hidden border-l-4 border-yellow-500">
+        <div class="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-orange-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <div class="flex items-center mb-6">
+            <div class="bg-yellow-100 p-3 rounded-full mr-4">
+              <i data-lucide="alert-circle" class="w-6 h-6 text-yellow-600"></i>
+            </div>
+            <h2 class="text-3xl font-bold bg-gradient-to-r from-yellow-900 to-orange-700 bg-clip-text text-transparent">Limitations & Caveats</h2>
+          </div>
+          <div class="space-y-4">
+            <div class="flex items-start space-x-3">
+              <div class="bg-yellow-100 p-1 rounded-full mt-1">
+                <i data-lucide="minus" class="w-3 h-3 text-yellow-600"></i>
+              </div>
+              <p class="text-gray-700">The model is only as good as the data used to train it; biases in the training data can create unexpected behavior.</p>
+            </div>
+            <div class="flex items-start space-x-3">
+              <div class="bg-yellow-100 p-1 rounded-full mt-1">
+                <i data-lucide="minus" class="w-3 h-3 text-yellow-600"></i>
+              </div>
+              <p class="text-gray-700">Rare medical conditions or risk factors outside the model's features aren't captured.</p>
+            </div>
+            <div class="flex items-start space-x-3">
+              <div class="bg-yellow-100 p-1 rounded-full mt-1">
+                <i data-lucide="minus" class="w-3 h-3 text-yellow-600"></i>
+              </div>
+              <p class="text-gray-700">Prediction tools like CADPredict do not replace professional diagnosis, lab tests, or imaging studies. Always consult a doctor.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Getting Started section -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 card-hover relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-teal-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <div class="flex items-center mb-6">
+            <div class="bg-emerald-100 p-3 rounded-full mr-4">
+              <i data-lucide="rocket" class="w-6 h-6 text-emerald-600"></i>
+            </div>
+            <h2 class="text-3xl font-bold bg-gradient-to-r from-emerald-900 to-teal-700 bg-clip-text text-transparent">Getting Started</h2>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+              <div class="flex items-center space-x-3">
+                <div class="bg-emerald-100 text-emerald-800 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">1</div>
+                <p class="text-gray-700">Clone the repository</p>
+              </div>
+              <div class="flex items-center space-x-3">
+                <div class="bg-emerald-100 text-emerald-800 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">2</div>
+                <p class="text-gray-700">Ensure model.pkl and scaler.pkl are in the project root</p>
+              </div>
+              <div class="flex items-center space-x-3">
+                <div class="bg-emerald-100 text-emerald-800 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">3</div>
+                <p class="text-gray-700">Install dependencies (Flask, scikit-learn, etc.)</p>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="flex items-center space-x-3">
+                <div class="bg-emerald-100 text-emerald-800 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">4</div>
+                <p class="text-gray-700">Run via python app.py</p>
+              </div>
+              <div class="flex items-center space-x-3">
+                <div class="bg-emerald-100 text-emerald-800 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">5</div>
+                <p class="text-gray-700">Open browser → navigate to localhost:5000</p>
+              </div>
+              <div class="flex items-center space-x-3">
+                <div class="bg-emerald-100 text-emerald-800 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">6</div>
+                <p class="text-gray-700">Click Test CAD to start assessment</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact section -->
+      <div class="w-full max-w-4xl glass-effect shadow-2xl rounded-3xl p-8 card-hover relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-indigo-500/5 rounded-3xl"></div>
+        <div class="relative z-10">
+          <div class="flex items-center mb-6">
+            <div class="bg-blue-100 p-3 rounded-full mr-4">
+              <i data-lucide="mail" class="w-6 h-6 text-blue-600"></i>
+            </div>
+            <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-900 to-indigo-700 bg-clip-text text-transparent">Contact & Support</h2>
+          </div>
+          <p class="text-gray-700 mb-6">If you have questions, suggestions, or discover bugs, please reach out:</p>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <a href="https://github.com/OrugboGodswill/ChiefonGit" class="flex items-center space-x-3 bg-gray-900 text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-all duration-300 hover:scale-105">
+              <i data-lucide="github" class="w-5 h-5"></i>
+              <span>GitHub Repository</span>
+            </a>
+            <a href="godswillorugbo11@gmail.com" class="flex items-center space-x-3 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 hover:scale-105">
+              <i data-lucide="mail" class="w-5 h-5"></i>
+              <span>Email Support</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+
+  <script>
+  lucide.createIcons();
+
+      document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+      const mobileMenu = document.getElementById('mobileMenu');
+      mobileMenu.classList.toggle('show');
+    });
+
+    document.addEventListener('click', function(event) {
+      const mobileMenu = document.getElementById('mobileMenu');
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      
+      if (!mobileMenu.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
+        mobileMenu.classList.remove('show');
+      }
+    });
+</script>
+</body>
+</html>
